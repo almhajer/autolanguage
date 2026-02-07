@@ -2,6 +2,8 @@
 
 امتداد لـ Visual Studio Code يقوم تلقائياً بتبديل لغة لوحة المفاتيح بين العربية والإنجليزية بناءً على النص الذي تكتبه.
 
+![Auto Language Screen](resources/AutoLanguage-screen.gif)
+
 ## المطور
 
 **عبدالكافي الحسن**

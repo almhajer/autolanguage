@@ -1,87 +1,87 @@
 {
-    "name": "autolanguage",
-    "displayName": "Auto Language Switcher",
-    "description": "التبديل التلقائي بين لغات لوحة المفاتيح (العربية والإنجليزية) بناءً على النص الذي يتم إدخاله.يدعم أنظمة Windows وmacOS وLinux.",
-    "version": "1.0.0",
-    "publisher": "abdulkafi",
-    "author": {
-        "name": "عبدالكافي الحسن"
-    },
-    "icon": "resources/icon.png",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/almhajer/autolanguage.git"
-    },
-    "bugs": {
-        "url": "https://github.com/almhajer/autolanguage/issues"
-    },
-    "homepage": "https://github.com/almhajer/autolanguage",
-    "engines": {
-        "vscode": "^1.60.0"
-    },
-    "categories": [
-        "Other"
+  "name": "autolanguage",
+  "displayName": "Auto Language Switcher",
+  "description": "التبديل التلقائي بين لغات لوحة المفاتيح (العربية والإنجليزية) بناءً على النص الذي يتم إدخاله. يدعم أنظمة Windows وmacOS وLinux.",
+  "version": "1.0.1",
+  "publisher": "Arabic-language",
+  "license": "MIT",
+  "author": {
+    "name": "عبدالكافي الحسن"
+  },
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/almhajer/autolanguage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/almhajer/autolanguage/issues"
+  },
+  "homepage": "https://github.com/almhajer/autolanguage",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "keyboard",
+    "language",
+    "arabic",
+    "english",
+    "multilingual",
+    "input",
+    "layout",
+    "windows",
+    "macos",
+    "linux"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "autolanguage.toggle",
+        "title": "Toggle Auto Language Switcher"
+      }
     ],
-    "keywords": [
-        "keyboard",
-        "language",
-        "arabic",
-        "english",
-        "multilingual",
-        "input",
-        "layout",
-        "windows",
-        "macos",
-        "linux"
-    ],
-    "activationEvents": [
-        "onStartupFinished"
-    ],
-    "main": "./out/extension.js",
-    "contributes": {
-        "commands": [
-            {
-                "command": "autolanguage.toggle",
-                "title": "Toggle Auto Language Switcher"
-            }
-        ],
-        "configuration": {
-            "title": "Auto Language Switcher",
-            "properties": {
-                "autolanguage.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable or disable the auto language switcher"
-                },
-                "autolanguage.showNotifications": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Show notifications when language is switched"
-                },
-                "autolanguage.showStatusBar": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Show status bar item with current language"
-                }
-            }
+    "configuration": {
+      "title": "Auto Language Switcher",
+      "properties": {
+        "autolanguage.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable the auto language switcher"
+        },
+        "autolanguage.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications when language is switched"
+        },
+        "autolanguage.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show status bar item with current language"
         }
-    },
-    "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "pretest": "npm run compile && npm run lint",
-        "lint": "eslint src --ext ts",
-        "test": "node ./out/test/runTest.js"
-    },
-    "devDependencies": {
-        "@types/node": "^16.x",
-        "@types/vscode": "^1.60.0",
-        "@typescript-eslint/eslint-plugin": "^5.0.0",
-        "@typescript-eslint/parser": "^5.0.0",
-        "@vscode/vsce": "^3.7.1",
-        "eslint": "^8.0.0",
-        "sharp": "^0.34.5",
-        "typescript": "^4.5.0"
+      }
     }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^16.0.0",
+    "@types/vscode": "^1.60.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "@vscode/vsce": "^3.7.1",
+    "eslint": "^8.0.0",
+    "typescript": "^4.5.0"
+  }
 }
