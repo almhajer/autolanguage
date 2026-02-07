@@ -2,7 +2,7 @@
   "name": "autolanguage",
   "displayName": "Auto Language Switcher",
   "description": "التبديل التلقائي بين لغات لوحة المفاتيح (العربية والإنجليزية) بناءً على النص الذي يتم إدخاله. يدعم أنظمة Windows وmacOS وLinux.",
-  "version": "1.0.2",
+  "version": "0.0.2",
   "publisher": "Arabic-language",
   "license": "MIT",
   "author": {
