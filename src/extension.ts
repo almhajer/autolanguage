@@ -218,6 +218,70 @@ async function runPowerShellSwitch(target: 'Arabic' | 'English') {
     const arabicLayoutIds = ['0401', '0801', '0C01', '1001', '1401', '1801', '1C01', '2001', '2401', '2801', '2C01', '3001', '3401', '3801', '3C01', '4001'];
     const englishLayoutIds = ['0409', '0809', '0C09', '1009', '1409', '1809', '1C09', '2009', '2409', '2809', '2C09', '3009', '3409'];
 
+    // دالة مساعدة للتحقق من التخطيط الحالي
+    const getCurrentLayoutId = async (): Promise<string | null> => {
+        const checkScript = `Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+
+public class KeyboardLayout {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetKeyboardLayout(uint threadId);
+}
+"@
+$currentLayout = [KeyboardLayout]::GetKeyboardLayout(0)
+$layoutId = ($currentLayout.ToInt64() -band 0xFFFF).ToString("X4")
+Write-Output $layoutId`;
+
+        const tempDir = os.tmpdir();
+        const tempScriptPath = path.join(tempDir, `autolanguage_check_${Date.now()}.ps1`);
+
+        try {
+            fs.writeFileSync(tempScriptPath, checkScript, 'utf8');
+            const command = `powershell -ExecutionPolicy Bypass -File "${tempScriptPath}"`;
+            const { stdout } = await execAsync(command);
+            return stdout.trim();
+        } catch (error) {
+            return null;
+        } finally {
+            try {
+                if (fs.existsSync(tempScriptPath)) {
+                    fs.unlinkSync(tempScriptPath);
+                }
+            } catch (cleanupError) {
+                // تجاهل خطأ حذف الملف المؤقت
+            }
+        }
+    };
+
+    // دالة مساعدة للتحقق مما إذا كان التخطيط الحالي صحيحاً
+    const isCurrentLayoutCorrect = async (): Promise<boolean> => {
+        const currentLayout = await getCurrentLayoutId();
+        if (!currentLayout) {
+            return false;
+        }
+
+        const targetLayoutIds = target === 'Arabic' ? arabicLayoutIds : englishLayoutIds;
+        
+        // التحقق من أن التخطيط الحالي ينتمي إلى مجموعة اللغة المستهدفة
+        if (targetLayoutIds.includes(currentLayout)) {
+            return true;
+        }
+
+        // تحقق إضافي: التحقق من المكون الأساسي للتخطيط (primary language ID)
+        const targetPrimaryId = target === 'Arabic' ? '01' : '09';
+        if (currentLayout.length === 4 && currentLayout.endsWith(targetPrimaryId)) {
+            return true;
+        }
+
+        return false;
+    };
+
+    // التحقق أولاً إذا كان التخطيط الحالي صحيحاً بالفعل
+    if (await isCurrentLayoutCorrect()) {
+        return;
+    }
+
     const psScript = `Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -334,6 +398,27 @@ async function runMacOSSwitch(target: 'Arabic' | 'English') {
     const layoutNames = target === 'Arabic' ? arabicLayoutNames : englishLayoutNames;
     const targetLayoutNames = target === 'Arabic' ? arabicLayoutNames : englishLayoutNames;
 
+    // دالة للتحقق من التخطيط الحالي
+    const checkCurrentLayout = async (): Promise<boolean> => {
+        try {
+            const { stdout: newLayout } = await execAsync(`osascript -e 'tell application "System Events" to tell key "input source" of key "text input sources" of key "current" of key "processes" of application "System Events" to get name'`);
+            const newLayoutName = newLayout.trim();
+            
+            // التحقق من أن التخطيط الجديد ينتمي إلى مجموعة اللغة المستهدفة
+            if (targetLayoutNames.some(name => newLayoutName.includes(name))) {
+                return true;
+            }
+        } catch (error) {
+            // تجاهل الخطأ في التحقق
+        }
+        return false;
+    };
+
+    // التحقق أولاً إذا كان التخطيط الحالي صحيحاً بالفعل
+    if (await checkCurrentLayout()) {
+        return;
+    }
+
     for (const layoutName of layoutNames) {
         try {
             const script = `tell application "System Events"
@@ -353,17 +438,8 @@ async function runMacOSSwitch(target: 'Arabic' | 'English') {
             await sleep(100);
 
             // تحقق من نجاح التبديل بشكل ذكي
-            try {
-                const { stdout: newLayout } = await execAsync(`osascript -e 'tell application "System Events" to tell key "input source" of key "text input sources" of key "current" of key "processes" of application "System Events" to get name'`);
-                const newLayoutName = newLayout.trim();
-                
-                // التحقق من أن التخطيط الجديد ينتمي إلى مجموعة اللغة المستهدفة
-                if (targetLayoutNames.some(name => newLayoutName.includes(name))) {
-                    // تم التبديل بنجاح أو كان التخطيط بالفعل صحيحاً
-                    return;
-                }
-            } catch (error) {
-                // تجاهل الخطأ في التحقق
+            if (await checkCurrentLayout()) {
+                return;
             }
         } catch (error) {
             continue;
@@ -377,17 +453,8 @@ async function runMacOSSwitch(target: 'Arabic' | 'English') {
         await sleep(300);
 
         // تحقق من نجاح التبديل بشكل ذكي
-        try {
-            const { stdout: newLayout } = await execAsync(`osascript -e 'tell application "System Events" to tell key "input source" of key "text input sources" of key "current" of key "processes" of application "System Events" to get name'`);
-            const newLayoutName = newLayout.trim();
-            
-            // التحقق من أن التخطيط الجديد ينتمي إلى مجموعة اللغة المستهدفة
-            if (targetLayoutNames.some(name => newLayoutName.includes(name))) {
-                // تم التبديل بنجاح أو كان التخطيط بالفعل صحيحاً
-                return;
-            }
-        } catch (error) {
-            // تجاهل الخطأ في التحقق
+        if (await checkCurrentLayout()) {
+            return;
         }
     } catch (error) {
         throw new Error(`Failed to switch to ${target} on macOS. Please ensure keyboard layouts are installed in System Preferences.`);
@@ -418,8 +485,19 @@ async function runLinuxSwitch(target: 'Arabic' | 'English') {
         return null;
     };
 
-    // حفظ التخطيط الحالي للتحقق لاحقاً
-    const initialLayout = await getCurrentLayout();
+    // دالة مساعدة للتحقق مما إذا كان التخطيط الحالي صحيحاً
+    const isCurrentLayoutCorrect = async (): Promise<boolean> => {
+        const currentLayout = await getCurrentLayout();
+        if (currentLayout && targetLayouts.some(t => currentLayout.includes(t))) {
+            return true;
+        }
+        return false;
+    };
+
+    // التحقق أولاً إذا كان التخطيط الحالي صحيحاً بالفعل
+    if (await isCurrentLayoutCorrect()) {
+        return;
+    }
 
     try {
         const { stdout: layouts } = await execAsync('gsettings get org.gnome.desktop.input-sources sources');
@@ -439,8 +517,7 @@ async function runLinuxSwitch(target: 'Arabic' | 'English') {
             await sleep(100);
             
             // تحقق من نجاح التبديل
-            const currentLayout = await getCurrentLayout();
-            if (currentLayout && targetLayouts.some(t => currentLayout.includes(t))) {
+            if (await isCurrentLayoutCorrect()) {
                 return;
             }
         }
@@ -454,8 +531,7 @@ async function runLinuxSwitch(target: 'Arabic' | 'English') {
         await sleep(100);
         
         // تحقق من نجاح التبديل
-        const currentLayout = await getCurrentLayout();
-        if (currentLayout && targetLayouts.some(t => currentLayout.includes(t))) {
+        if (await isCurrentLayoutCorrect()) {
             return;
         }
     } catch (error) {
@@ -468,8 +544,7 @@ async function runLinuxSwitch(target: 'Arabic' | 'English') {
         await sleep(100);
         
         // تحقق من نجاح التبديل
-        const currentLayout = await getCurrentLayout();
-        if (currentLayout && targetLayouts.some(t => currentLayout.includes(t))) {
+        if (await isCurrentLayoutCorrect()) {
             return;
         }
     } catch (error) {
@@ -482,8 +557,7 @@ async function runLinuxSwitch(target: 'Arabic' | 'English') {
         await sleep(100);
         
         // تحقق من نجاح التبديل
-        const currentLayout = await getCurrentLayout();
-        if (currentLayout && targetLayouts.some(t => currentLayout.includes(t))) {
+        if (await isCurrentLayoutCorrect()) {
             return;
         }
     } catch (error) {
@@ -496,8 +570,7 @@ async function runLinuxSwitch(target: 'Arabic' | 'English') {
         await sleep(100);
         
         // تحقق من نجاح التبديل
-        const currentLayout = await getCurrentLayout();
-        if (currentLayout && targetLayouts.some(t => currentLayout.includes(t))) {
+        if (await isCurrentLayoutCorrect()) {
             return;
         }
     } catch (error) {
