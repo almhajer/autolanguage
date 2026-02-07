@@ -16,6 +16,7 @@ let statusBarItem: vscode.StatusBarItem;
 // متغيرات لتجنب التبديل المتكرر
 let lastSwitchedLine = -1; // تتبع آخر سطر تم التبديل فيه
 let isSwitching = false;
+let switchingTimeout: NodeJS.Timeout | null = null; // مهلة زمنية لإعادة تعيين isSwitching
 
 // اكتشاف نظام التشغيل
 const platform = os.platform();
@@ -59,6 +60,15 @@ export function activate(context: vscode.ExtensionContext) {
             isSwitching = true;
             lastSwitchedLine = currentLine;
 
+            // تعيين مهلة زمنية لإعادة تعيين isSwitching في حالة عدم اكتمال العملية
+            if (switchingTimeout) {
+                clearTimeout(switchingTimeout);
+            }
+            switchingTimeout = setTimeout(() => {
+                isSwitching = false;
+                switchingTimeout = null;
+            }, 2000); // مهلة 2 ثانية
+
             try {
                 if (lang === 'Arabic') {
                     await switchToArabic();
@@ -84,6 +94,10 @@ export function activate(context: vscode.ExtensionContext) {
                 lastSwitchedLine = -1;
             } finally {
                 isSwitching = false;
+                if (switchingTimeout) {
+                    clearTimeout(switchingTimeout);
+                    switchingTimeout = null;
+                }
             }
         }
 
@@ -116,7 +130,10 @@ function detectLanguageInLine(document: vscode.TextDocument, line: number): 'Ara
 
     let arabicCount = 0;
     let englishCount = 0;
+    let arabicWordCount = 0;
+    let englishWordCount = 0;
 
+    // إحصاء الأحرف
     for (const char of lineText) {
         if (isArabic(char)) {
             arabicCount++;
@@ -125,10 +142,27 @@ function detectLanguageInLine(document: vscode.TextDocument, line: number): 'Ara
         }
     }
 
-    // تحديد اللغة بناءً على العدد الأكبر
-    if (arabicCount > englishCount && arabicCount > 0) {
+    // إحصاء الكلمات (لأغراض أفضل)
+    const words = lineText.split(/\s+/).filter(word => word.length > 0);
+    for (const word of words) {
+        if (isArabic(word[0])) {
+            arabicWordCount++;
+        } else if (isEnglish(word[0])) {
+            englishWordCount++;
+        }
+    }
+
+    // تحديد اللغة بناءً على العدد الأكبر للأحرف والكلمات
+    // إعطاء وزن أكبر للكلمات (2x) لأنها أكثر دلالة
+    const arabicScore = arabicCount + (arabicWordCount * 2);
+    const englishScore = englishCount + (englishWordCount * 2);
+
+    // الحد الأدنى من الأحرف لتحديد اللغة
+    const minCharCount = 2;
+
+    if (arabicScore > englishScore && arabicCount >= minCharCount) {
         return 'Arabic';
-    } else if (englishCount > arabicCount && englishCount > 0) {
+    } else if (englishScore > arabicScore && englishCount >= minCharCount) {
         return 'English';
     } else {
         return 'None';
@@ -178,6 +212,27 @@ async function switchToEnglish() {
 async function runPowerShellSwitch(target: 'Arabic' | 'English') {
     const primaryLangId = target === 'Arabic' ? '0x01' : '0x09';
 
+    // أولاً، حاول الحصول على التخطيط الحالي للتحقق لاحقاً
+    let currentLayout = '';
+    try {
+        const getCurrentLayoutScript = `Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+
+public class CurrentLayout {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetKeyboardLayout(uint threadId);
+}
+"@
+$layout = [CurrentLayout]::GetKeyboardLayout(0)
+$layoutId = ($layout.ToInt64() -band 0xFFFF).ToString("X4")
+Write-Output $layoutId`;
+        const { stdout } = await execAsync(`powershell -ExecutionPolicy Bypass -Command "${getCurrentLayoutScript}"`);
+        currentLayout = stdout.trim();
+    } catch (error) {
+        // تجاهل الخطأ
+    }
+
     const psScript = `Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -192,6 +247,9 @@ public class KeyboardLayout {
 
     [DllImport("user32.dll")]
     public static extern int GetKeyboardLayoutList(int nBuff, [Out] IntPtr[] lpList);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetKeyboardLayout(uint threadId);
 
     public const uint WM_INPUTLANGCHANGEREQUEST = 0x0050;
 
@@ -210,7 +268,11 @@ public class KeyboardLayout {
 $hwnd = [KeyboardLayout]::GetForegroundWindow()
 $layout = [KeyboardLayout]::FindLayout(${primaryLangId})
 if ($layout -ne [IntPtr]::Zero) {
-    [KeyboardLayout]::PostMessage($hwnd, [KeyboardLayout]::WM_INPUTLANGCHANGEREQUEST, [IntPtr]::Zero, $layout)
+    $result = [KeyboardLayout]::PostMessage($hwnd, [KeyboardLayout]::WM_INPUTLANGCHANGEREQUEST, [IntPtr]::Zero, $layout)
+    Start-Sleep -Milliseconds 100
+    $newLayout = [KeyboardLayout]::GetKeyboardLayout(0)
+    $newLayoutId = ($newLayout.ToInt64() -band 0xFFFF).ToString("X4")
+    Write-Output $newLayoutId
 } else {
     Write-Error "Keyboard layout for ${target} (ID: ${primaryLangId}) not found. Please ensure the keyboard layout is installed."
 }`;
@@ -221,11 +283,20 @@ if ($layout -ne [IntPtr]::Zero) {
     try {
         fs.writeFileSync(tempScriptPath, psScript, 'utf8');
         const command = `powershell -ExecutionPolicy Bypass -File "${tempScriptPath}"`;
-        const { stderr } = await execAsync(command);
+        const { stdout, stderr } = await execAsync(command);
 
         if (stderr) {
             if (stderr.includes('not found') || stderr.includes('not installed')) {
                 throw new Error(`Keyboard layout for ${target} is not installed on your system.`);
+            }
+        }
+
+        // تحقق من نجاح التبديل
+        if (stdout && stdout.trim()) {
+            const newLayout = stdout.trim();
+            if (newLayout !== currentLayout) {
+                // تم التبديل بنجاح
+                return;
             }
         }
     } catch (error) {
@@ -240,6 +311,8 @@ if ($layout -ne [IntPtr]::Zero) {
             // تجاهل خطأ حذف الملف المؤقت
         }
     }
+
+    throw new Error(`Failed to switch to ${target}. Please ensure the keyboard layout is installed.`);
 }
 
 async function runMacOSSwitch(target: 'Arabic' | 'English') {
@@ -263,6 +336,15 @@ async function runMacOSSwitch(target: 'Arabic' | 'English') {
 
     const layoutNames = target === 'Arabic' ? arabicLayoutNames : englishLayoutNames;
 
+    // أولاً، حاول الحصول على التخطيط الحالي للتحقق لاحقاً
+    let currentLayout = '';
+    try {
+        const { stdout } = await execAsync(`osascript -e 'tell application "System Events" to tell key "input source" of key "text input sources" of key "current" of key "processes" of application "System Events" to get name'`);
+        currentLayout = stdout.trim();
+    } catch (error) {
+        // تجاهل الخطأ
+    }
+
     for (const layoutName of layoutNames) {
         try {
             const script = `tell application "System Events"
@@ -279,20 +361,44 @@ async function runMacOSSwitch(target: 'Arabic' | 'English') {
 
             const command = `osascript -e '${script}'`;
             await execAsync(command);
-            await sleep(50);
-            return;
+            await sleep(100);
+
+            // تحقق من نجاح التبديل
+            try {
+                const { stdout: newLayout } = await execAsync(`osascript -e 'tell application "System Events" to tell key "input source" of key "text input sources" of key "current" of key "processes" of application "System Events" to get name'`);
+                if (newLayout.trim() !== currentLayout) {
+                    // تم التبديل بنجاح
+                    return;
+                }
+            } catch (error) {
+                // تجاهل الخطأ في التحقق
+            }
         } catch (error) {
             continue;
         }
     }
 
+    // إذا فشلت جميع المحاولات، حاول استخدام Control+Space
     try {
         const command = `osascript -e 'tell application "System Events" to keystroke space using {control down}'`;
         await execAsync(command);
-        await sleep(200);
+        await sleep(300);
+
+        // تحقق من نجاح التبديل
+        try {
+            const { stdout: newLayout } = await execAsync(`osascript -e 'tell application "System Events" to tell key "input source" of key "text input sources" of key "current" of key "processes" of application "System Events" to get name'`);
+            if (newLayout.trim() !== currentLayout) {
+                // تم التبديل بنجاح
+                return;
+            }
+        } catch (error) {
+            // تجاهل الخطأ في التحقق
+        }
     } catch (error) {
         throw new Error(`Failed to switch to ${target} on macOS. Please ensure keyboard layouts are installed in System Preferences.`);
     }
+
+    throw new Error(`Failed to switch to ${target} on macOS. Please ensure keyboard layouts are installed in System Preferences.`);
 }
 
 async function runLinuxSwitch(target: 'Arabic' | 'English') {
