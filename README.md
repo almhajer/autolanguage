@@ -32,17 +32,17 @@
 
 ### الطريقة 1: من ملف VSIX (موصى به)
 
-1. قم بتحميل ملف `autolanguage-1.0.0.vsix`
+1. قم بتحميل ملف `autolanguage-0.0.6.vsix`
 2. افتح VS Code
 3. اذهب إلى قائمة الامتدادات (Extensions)
 4. اضغط على "..." في الزاوية العلوية
 5. اختر "Install from VSIX..."
-6. حدد ملف `autolanguage-1.0.0.vsix`
+6. حدد ملف `autolanguage-0.0.6.vsix`
 
 ### الطريقة 2: من سطر الأوامر
 
 ```bash
-code --install-extension autolanguage-1.0.0.vsix
+code --install-extension autolanguage-0.0.6.vsix
 ```
 
 ## الاستخدام

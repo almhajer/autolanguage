@@ -14,7 +14,7 @@ let lastLanguage: 'Arabic' | 'English' | 'None' = 'None';
 let statusBarItem: vscode.StatusBarItem;
 
 // متغيرات لتجنب التبديل المتكرر
-let lastSwitchedLine = -1; // تتبع آخر سطر تم التبديل فيه
+let lastAnalyzedPosition = '';
 let isSwitching = false;
 let switchingTimeout: NodeJS.Timeout | null = null; // مهلة زمنية لإعادة تعيين isSwitching
 
@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (!settings.get('enabled')) {
             updateStatusBar('Disabled', 'None');
-            lastSwitchedLine = -1;
+            lastAnalyzedPosition = '';
             return;
         }
 
@@ -44,21 +44,29 @@ export function activate(context: vscode.ExtensionContext) {
 
         const selection = event.selections[0];
         const document = editor.document;
-        const currentLine = selection.active.line;
+        const cursor = selection.active;
+        const positionKey = `${document.uri.toString()}:${document.version}:${cursor.line}:${cursor.character}`;
 
-        // التبديل فقط عند الانتقال لسطر جديد
-        if (currentLine === lastSwitchedLine) {
+        // تخطي المعالجة عند نفس الموضع تماماً
+        if (positionKey === lastAnalyzedPosition) {
             updateStatusBar('Active', lastLanguage);
             return;
         }
+        lastAnalyzedPosition = positionKey;
 
-        // كشف اللغة في السطر الجديد
-        const lang = detectLanguageInLine(document, currentLine);
+        // كشف اللغة في النص المجاور للمؤشر (الماوس/مكان الكتابة)
+        const lang = detectLanguageNearCursor(document, cursor);
 
         // التبديل فقط إذا كانت اللغة مختلفة وليست None
         if (lang !== 'None' && lang !== lastLanguage) {
+            const currentSystemLanguage = await detectCurrentInputLanguage();
+            if (currentSystemLanguage === lang) {
+                lastLanguage = lang;
+                updateStatusBar('Active', lang);
+                return;
+            }
+
             isSwitching = true;
-            lastSwitchedLine = currentLine;
 
             // تعيين مهلة زمنية لإعادة تعيين isSwitching في حالة عدم اكتمال العملية
             if (switchingTimeout) {
@@ -91,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
                 } else {
                     vscode.window.showErrorMessage(`Auto Language: ${errorMessage}`);
                 }
-                lastSwitchedLine = -1;
+                lastAnalyzedPosition = '';
             } finally {
                 isSwitching = false;
                 if (switchingTimeout) {
@@ -110,8 +118,8 @@ export function activate(context: vscode.ExtensionContext) {
         const settings = vscode.workspace.getConfiguration('autolanguage');
         const currentState = settings.get('enabled');
         settings.update('enabled', !currentState, true);
-        // إعادة تعيين آخر سطر تم التبديل فيه
-        lastSwitchedLine = -1;
+        // إعادة تعيين آخر موضع تم تحليله
+        lastAnalyzedPosition = '';
         vscode.window.showInformationMessage(`Auto Language is now ${!currentState ? 'Enabled' : 'Disabled'}`);
     });
 
@@ -119,22 +127,25 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 /**
- * كشف بسيط للغة في السطر
- * يتحقق من وجود أحرف عربية أو إنجليزية في السطر
+ * كشف ذكي للغة في النص المجاور للمؤشر
  */
-function detectLanguageInLine(document: vscode.TextDocument, line: number): 'Arabic' | 'English' | 'None' {
-    const lineText = document.lineAt(line).text;
-    if (!lineText || lineText.trim().length === 0) {
+function detectLanguageNearCursor(document: vscode.TextDocument, position: vscode.Position): 'Arabic' | 'English' | 'None' {
+    const radius = 40;
+    const context = getContextTextNearCursor(document, position, radius);
+    if (!context.nearbyText.trim()) {
         return 'None';
     }
+
+    const nearbyText = context.nearbyText;
+    const focusedWord = context.focusedWord;
 
     let arabicCount = 0;
     let englishCount = 0;
     let arabicWordCount = 0;
     let englishWordCount = 0;
 
-    // إحصاء الأحرف
-    for (const char of lineText) {
+    // إحصاء الأحرف في النص المجاور
+    for (const char of nearbyText) {
         if (isArabic(char)) {
             arabicCount++;
         } else if (isEnglish(char)) {
@@ -142,8 +153,8 @@ function detectLanguageInLine(document: vscode.TextDocument, line: number): 'Ara
         }
     }
 
-    // إحصاء الكلمات (لأغراض أفضل)
-    const words = lineText.split(/\s+/).filter(word => word.length > 0);
+    // إحصاء الكلمات في المنطقة القريبة
+    const words = nearbyText.split(/\s+/).filter(word => word.length > 0);
     for (const word of words) {
         if (isArabic(word[0])) {
             arabicWordCount++;
@@ -152,13 +163,22 @@ function detectLanguageInLine(document: vscode.TextDocument, line: number): 'Ara
         }
     }
 
+    // إعطاء وزن أعلى للكلمة التي عند المؤشر مباشرة
+    if (focusedWord.length > 0) {
+        for (const char of focusedWord) {
+            if (isArabic(char)) {
+                arabicCount += 2;
+            } else if (isEnglish(char)) {
+                englishCount += 2;
+            }
+        }
+    }
+
     // تحديد اللغة بناءً على العدد الأكبر للأحرف والكلمات
-    // إعطاء وزن أكبر للكلمات (2x) لأنها أكثر دلالة
     const arabicScore = arabicCount + (arabicWordCount * 2);
     const englishScore = englishCount + (englishWordCount * 2);
 
-    // الحد الأدنى من الأحرف لتحديد اللغة
-    const minCharCount = 2;
+    const minCharCount = 1;
 
     if (arabicScore > englishScore && arabicCount >= minCharCount) {
         return 'Arabic';
@@ -167,6 +187,75 @@ function detectLanguageInLine(document: vscode.TextDocument, line: number): 'Ara
     } else {
         return 'None';
     }
+}
+
+function getContextTextNearCursor(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    radius: number
+): { nearbyText: string; focusedWord: string } {
+    const currentLineText = document.lineAt(position.line).text;
+    const isCurrentLineUseful = /[\u0600-\u06FFa-zA-Z]/.test(currentLineText);
+
+    if (isCurrentLineUseful) {
+        const start = Math.max(0, position.character - radius);
+        const end = Math.min(currentLineText.length, position.character + radius);
+        return {
+            nearbyText: currentLineText.slice(start, end),
+            focusedWord: getWordAtPosition(currentLineText, position.character)
+        };
+    }
+
+    // عند السطر الفارغ/غير المفيد: استخدم أقرب سطر يحتوي نصاً (أولوية للسطر السابق)
+    const maxLineDistance = 3;
+    for (let distance = 1; distance <= maxLineDistance; distance++) {
+        const prevLine = position.line - distance;
+        if (prevLine >= 0) {
+            const prevText = document.lineAt(prevLine).text;
+            if (/[\u0600-\u06FFa-zA-Z]/.test(prevText)) {
+                const start = Math.max(0, position.character - radius);
+                const end = Math.min(prevText.length, position.character + radius);
+                return {
+                    nearbyText: prevText.slice(start, end) || prevText,
+                    focusedWord: getWordAtPosition(prevText, Math.min(position.character, prevText.length))
+                };
+            }
+        }
+
+        const nextLine = position.line + distance;
+        if (nextLine < document.lineCount) {
+            const nextText = document.lineAt(nextLine).text;
+            if (/[\u0600-\u06FFa-zA-Z]/.test(nextText)) {
+                const start = Math.max(0, position.character - radius);
+                const end = Math.min(nextText.length, position.character + radius);
+                return {
+                    nearbyText: nextText.slice(start, end) || nextText,
+                    focusedWord: getWordAtPosition(nextText, Math.min(position.character, nextText.length))
+                };
+            }
+        }
+    }
+
+    return { nearbyText: '', focusedWord: '' };
+}
+
+function getWordAtPosition(lineText: string, cursorChar: number): string {
+    if (!lineText) {
+        return '';
+    }
+
+    const safeCursor = Math.max(0, Math.min(cursorChar, lineText.length));
+    let start = safeCursor;
+    let end = safeCursor;
+
+    while (start > 0 && !/\s/.test(lineText[start - 1])) {
+        start--;
+    }
+    while (end < lineText.length && !/\s/.test(lineText[end])) {
+        end++;
+    }
+
+    return lineText.slice(start, end).trim();
 }
 
 function isArabic(c: string): boolean {
@@ -183,6 +272,77 @@ function isArabic(c: string): boolean {
 
 function isEnglish(c: string): boolean {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+async function detectCurrentInputLanguage(): Promise<'Arabic' | 'English' | 'None'> {
+    try {
+        if (platform === 'win32') {
+            const checkScript = `Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+
+public class KeyboardLayout {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetKeyboardLayout(uint threadId);
+}
+"@
+$currentLayout = [KeyboardLayout]::GetKeyboardLayout(0)
+$layoutId = ($currentLayout.ToInt64() -band 0xFFFF).ToString("X4")
+Write-Output $layoutId`;
+
+            const tempScriptPath = path.join(os.tmpdir(), `autolanguage_detect_${Date.now()}.ps1`);
+            try {
+                fs.writeFileSync(tempScriptPath, checkScript, 'utf8');
+                const { stdout } = await execAsync(`powershell -ExecutionPolicy Bypass -File "${tempScriptPath}"`);
+                const layout = stdout.trim();
+                if (layout.length === 4 && layout.endsWith('01')) {
+                    return 'Arabic';
+                }
+                if (layout.length === 4 && layout.endsWith('09')) {
+                    return 'English';
+                }
+            } finally {
+                try {
+                    if (fs.existsSync(tempScriptPath)) {
+                        fs.unlinkSync(tempScriptPath);
+                    }
+                } catch {
+                    // تجاهل أخطاء التنظيف
+                }
+            }
+        } else if (platform === 'darwin') {
+            const { stdout } = await execAsync(`osascript -e 'tell application "System Events" to get name of current input source'`);
+            const inputName = stdout.trim().toLowerCase();
+            if (inputName.includes('arabic') || inputName.includes('العربية')) {
+                return 'Arabic';
+            }
+            if (inputName.includes('u.s.') || inputName.includes('english') || inputName.includes('abc') || inputName.includes('us')) {
+                return 'English';
+            }
+        } else if (platform === 'linux') {
+            try {
+                const { stdout } = await execAsync('gsettings get org.gnome.desktop.input-sources current');
+                const currentIndex = parseInt(stdout.trim(), 10);
+                const { stdout: layouts } = await execAsync('gsettings get org.gnome.desktop.input-sources sources');
+                const layoutArray = JSON.parse(layouts.replace(/'/g, '"'));
+                if (currentIndex >= 0 && currentIndex < layoutArray.length) {
+                    const layout = String(layoutArray[currentIndex][1]).toLowerCase();
+                    if (layout.includes('ar')) {
+                        return 'Arabic';
+                    }
+                    if (layout.includes('us') || layout.includes('en') || layout.includes('gb')) {
+                        return 'English';
+                    }
+                }
+            } catch {
+                // تجاهل خطأ gsettings
+            }
+        }
+    } catch {
+        // تجاهل الأخطاء والعودة إلى None
+    }
+
+    return 'None';
 }
 
 async function switchToArabic() {
