@@ -33,7 +33,19 @@
     "layout",
     "windows",
     "macos",
-    "linux"
+    "linux",
+    "auto switch",
+    "auto language",
+    "language detection",
+    "تغيير اللغة",
+    "تبديل اللغة",
+    "لوحة المفاتيح",
+    "العربية",
+    "الإنجليزية",
+    "متعدد اللغات",
+    "تخطيط",
+    "تبديل تلقائي",
+    "كشف اللغة"
   ],
   "activationEvents": [
     "onStartupFinished"
