@@ -6,7 +6,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.0.6-blue?style=for-the-badge&logo=visual-studio-code)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.60.0%2B-green?style=for-the-badge&logo=visual-studio-code)
-![License](https://img.shields.io/badge/license-MIT-orange?style=for-the-badge&logo=opensourceinitiative)
+[![License](https://img.shields.io/badge/license-MIT-orange?style=for-the-badge&logo=opensourceinitiative)](LICENSE.md)
 
 </div>
 
