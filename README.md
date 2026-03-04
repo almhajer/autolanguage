@@ -283,11 +283,11 @@ graph LR
 
 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white;">
 
-```bash
-MIT License
-مرخّص بموجب رخصة MIT.
-راجع LICENSE.md للاطلاع على التفاصيل الكاملة.
-```
+### MIT License
+
+مرخّص بموجب **رخصة MIT**.
+
+راجع ملف [LICENSE.md](LICENSE.md) للاطلاع على التفاصيل الكاملة.
 
 </div>
 
