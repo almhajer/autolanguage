@@ -285,8 +285,8 @@ graph LR
 
 ```bash
 MIT License
-This project is licensed under MIT
-See LICENSE.md for details
+Licensed under the MIT License.
+See LICENSE.md for full details.
 ```
 
 </div>
