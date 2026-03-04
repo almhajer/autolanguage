@@ -4,13 +4,13 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.0.6-blue)
-![VS Code](https://img.shields.io/badge/VS%20Code-1.60.0%2B-green)
-![License](https://img.shields.io/badge/license-MIT-orange)
+![Version](https://img.shields.io/badge/version-0.0.6-blue?style=for-the-badge&logo=visual-studio-code)
+![VS Code](https://img.shields.io/badge/VS%20Code-1.60.0%2B-green?style=for-the-badge&logo=visual-studio-code)
+![License](https://img.shields.io/badge/license-MIT-orange?style=for-the-badge&logo=opensourceinitiative)
 
 </div>
 
-### Smart automatic keyboard language switching between **Arabic** and **English** based on text near the cursor
+### A smart extension that automatically switches keyboard input between **Arabic** and **English** based on text near the cursor
 
 <div align="center">
 
@@ -28,15 +28,15 @@
 
 | Section | Description |
 |:-------:|:-----------|
-| [🌟 Overview](#-overview) | What this extension does |
-| [✨ Features](#-features) | Main capabilities |
+| [🌟 Overview](#-overview) | Learn what Auto Language does |
+| [✨ Features](#-features) | Core extension capabilities |
 | [📥 Installation](#-installation) | Install from VSIX |
-| [🚀 Usage](#-usage) | How it works in the editor |
-| [⌨️ Useful Shortcuts](#️-useful-shortcuts) | Helpful VS Code shortcuts |
+| [🚀 Usage](#-usage) | How it works in editor |
+| [⌨️ Useful Shortcuts](#️-useful-shortcuts) | Quick VS Code shortcuts |
 | [⚙️ Configuration](#️-configuration) | Extension settings |
-| [🤝 Contributing](#-contributing) | Contribution links |
-| [📞 Support](#-support) | Support and issue reporting |
-| [📄 License](#-license) | Project license |
+| [🤝 Contributing](#-contributing) | How to contribute |
+| [📞 Support](#-support) | Help and useful links |
+| [📄 License](#-license) | License information |
 
 </div>
 
@@ -48,22 +48,23 @@
 
 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white;">
 
-> **Auto Language Switcher** detects nearby text language and switches the system input source to Arabic or English only when needed.
+> **Auto Language Switcher** detects language from text around the cursor and switches the system input source only when needed.
 
 </div>
+
+### 🎯 Why this extension?
 
 </div>
 
 <div align="center">
 
-| Capability | Description |
-|:----------:|:-----------|
-| 🧠 | Smart detection from text around the cursor |
-| 🎯 | Extra weight for the focused word at cursor |
-| 🔄 | Handles empty new lines using nearest context |
-| ✅ | Skips switching when current input already matches |
-| 📊 | Status bar indicator for detected language |
-| 🔔 | Optional switch notifications |
+| Feature | Description |
+|:-------:|:-----------|
+| 🧠 | **Smart detection** from nearby cursor context |
+| 🎯 | **Higher precision** by weighting the focused word |
+| 🔄 | **Smooth flow** on empty new lines using nearest context |
+| ✅ | **No unnecessary switches** when current input is already correct |
+| 🌍 | **Cross-platform support** for Windows, macOS, and Linux |
 
 </div>
 
@@ -79,13 +80,15 @@
 
 <div align="center">
 
-```bash
-┌─────────────────────────────────────────┐
-│  Reads text near cursor position        │
-│  Detects Arabic / English accurately    │
-│  Avoids noisy full-line-only decisions  │
-└─────────────────────────────────────────┘
-```
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin: 20px 0;">
+
+| Feature |
+|:--------|
+| 📍 Reads text near cursor position |
+| 🔤 Detects Arabic and English accurately |
+| 🎯 Avoids noisy full-line-only decisions |
+
+</div>
 
 </div>
 
@@ -93,13 +96,15 @@
 
 <div align="center">
 
-```bash
-┌─────────────────────────────────────────┐
-│  Switch to Arabic when Arabic is needed │
-│  Switch to English when English is needed│
-│  No switch if current layout is correct │
-└─────────────────────────────────────────┘
-```
+<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 25px; border-radius: 15px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin: 20px 0;">
+
+| Behavior |
+|:---------|
+| 🇸🇦 Switches to Arabic when needed |
+| 🇬🇧 Switches to English when needed |
+| 🚫 Skips switching when current input is already correct |
+
+</div>
 
 </div>
 
@@ -107,11 +112,11 @@
 
 <div align="center">
 
-| Platform | Status |
-|:--------:|:------:|
-| 🪟 Windows | ✅ Supported |
-| 🍎 macOS | ✅ Supported |
-| 🐧 Linux | ✅ Supported |
+| Platform | Implementation | Status |
+|:--------:|:--------------:|:------:|
+| 🪟 Windows | PowerShell + Win32 API | ✅ Supported |
+| 🍎 macOS | AppleScript / Input Sources | ✅ Supported |
+| 🐧 Linux | gsettings / setxkbmap / ibus / fcitx | ✅ Supported |
 
 </div>
 
@@ -127,25 +132,31 @@
 
 <div align="center">
 
-<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px; color: white;">
+<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; border-radius: 15px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin: 20px 0;">
 
-```
-1️⃣ Download autolanguage-0.0.6.vsix
-2️⃣ Open VS Code
-3️⃣ Open Command Palette
-4️⃣ Run: Extensions: Install from VSIX...
-5️⃣ Select the downloaded file ✅
-```
-
-</div>
+| Step | Action |
+|:----:|:-------|
+| 1️⃣ | Download `autolanguage-0.0.6.vsix` |
+| 2️⃣ | Open VS Code |
+| 3️⃣ | Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac) |
+| 4️⃣ | Run `Extensions: Install from VSIX...` |
+| 5️⃣ | Select the downloaded file ✅ |
 
 </div>
 
-### Terminal install
+</div>
+
+### ⌨️ Terminal install
 
 ```bash
 code --install-extension autolanguage-0.0.6.vsix
 ```
+
+<div align="center">
+
+[![Download VSIX](https://img.shields.io/badge/Download-VSIX-blue?style=for-the-badge)](https://github.com/almhajer/autolanguage/releases/tag/v0.0.6)
+
+</div>
 
 ---
 
@@ -155,11 +166,11 @@ code --install-extension autolanguage-0.0.6.vsix
 
 </div>
 
-### How it works
+### 🎬 How the extension works
 
 ```mermaid
 graph LR
-    A[Move Cursor / Start Typing] --> B[Read Nearby Text]
+    A[Move Cursor / Start Typing] --> B[Analyze Nearby Text]
     B --> C{Arabic or English?}
     C -->|Arabic| D[Switch to Arabic if needed]
     C -->|English| E[Switch to English if needed]
@@ -167,7 +178,7 @@ graph LR
     E --> F[Update Status Bar]
 ```
 
-### Typical flow
+### 📝 Quick flow
 
 <div align="center">
 
@@ -175,9 +186,9 @@ graph LR
 |:----:|:-------|
 | 1️⃣ | Place cursor near Arabic text |
 | 2️⃣ | Extension detects Arabic |
-| 3️⃣ | Input switches to Arabic if required |
+| 3️⃣ | Input switches to Arabic when needed |
 | 4️⃣ | Move to English text |
-| 5️⃣ | Input switches to English if required |
+| 5️⃣ | Input switches to English when needed |
 
 </div>
 
@@ -196,7 +207,7 @@ graph LR
 | Open Command Palette | `Ctrl+Shift+P` |
 | Open Extensions View | `Ctrl+Shift+X` |
 | Open Settings | `Ctrl+,` |
-| Reload Window | `Ctrl+Shift+P` then `Developer: Reload Window` |
+| Reload VS Code | `Ctrl+Shift+P` → `Developer: Reload Window` |
 
 </div>
 
@@ -212,9 +223,9 @@ graph LR
 
 | Setting | Type | Default | Description |
 |:-------:|:----:|:-------:|:------------|
-| `autolanguage.enabled` | boolean | `true` | Enable/disable automatic switching |
-| `autolanguage.showNotifications` | boolean | `true` | Show notification after switching |
-| `autolanguage.showStatusBar` | boolean | `true` | Show current state in status bar |
+| `autolanguage.enabled` | boolean | `true` | Enable/disable extension |
+| `autolanguage.showNotifications` | boolean | `true` | Show notifications when switching |
+| `autolanguage.showStatusBar` | boolean | `true` | Show language status in status bar |
 
 </div>
 
@@ -224,15 +235,21 @@ graph LR
 
 # 🤝 Contributing
 
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; color: white; margin-bottom: 20px;">
+
+### Contributions are welcome! 🙌
+
+</div>
+
 </div>
 
 <div align="center">
 
 | Contribution Type | Link |
 |:-----------------:|:----:|
-| 🐛 Report an Issue | [Open Issue](https://github.com/almhajer/autolanguage/issues/new) |
-| 💡 Request a Feature | [Feature Request](https://github.com/almhajer/autolanguage/issues/new) |
-| 🔧 Contribute Code | [Pull Requests](https://github.com/almhajer/autolanguage/pulls) |
+| 🐛 Report a bug | [Open Issue](https://github.com/almhajer/autolanguage/issues/new) |
+| 💡 Request a feature | [Feature Request](https://github.com/almhajer/autolanguage/issues/new) |
+| 🔧 Contribute code | [Pull Requests](https://github.com/almhajer/autolanguage/pulls) |
 
 </div>
 
@@ -242,10 +259,15 @@ graph LR
 
 # 📞 Support
 
-For support and updates:
+</div>
 
-[![Repository](https://img.shields.io/badge/GitHub-Repository-black)](https://github.com/almhajer/autolanguage)
-[![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-AutoLanguage-blue)](https://marketplace.visualstudio.com/items?itemName=Arabic-language.autolanguage)
+<div align="center">
+
+| Link | Description |
+|:----:|:-----------|
+| [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge)](https://github.com/almhajer/autolanguage) | Official repository |
+| [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-AutoLanguage-green?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=Arabic-language.autolanguage) | Extension page |
+| [![Publisher](https://img.shields.io/badge/Publisher-Arabic--language-blue?style=for-the-badge)](https://marketplace.visualstudio.com/publishers/Arabic-language) | All publisher extensions |
 
 </div>
 
@@ -255,10 +277,15 @@ For support and updates:
 
 # 📄 License
 
+</div>
+
+<div align="center">
+
 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white;">
 
 ```bash
 MIT License
+This project is licensed under MIT
 See LICENSE.md for details
 ```
 
@@ -270,11 +297,11 @@ See LICENSE.md for details
 
 <div align="center">
 
-<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 35px; border-radius: 18px; color: white; margin: 30px 0;">
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 20px; color: white; margin: 30px 0;">
 
-### 🌟 If this extension helps you, consider giving the repo a star
+### 🌟 If you like the project, don't forget to star it
 
-**Made for Arabic-English developers using VS Code**
+**Made with ❤️ for the Arabic developer community**
 
 </div>
 
