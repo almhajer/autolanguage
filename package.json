@@ -1,5 +1,5 @@
 {
-  "name": "autolanguage",
+  "name": "@almhajer/autolanguage",
   "displayName": "Auto Language Switcher",
   "description": "التبديل التلقائي بين لغات لوحة المفاتيح (العربية والإنجليزية) بناءً على النص الذي يتم إدخاله. يدعم أنظمة Windows وmacOS وLinux.",
   "version": "0.0.9",
@@ -17,6 +17,9 @@
     "url": "https://github.com/almhajer/autolanguage/issues"
   },
   "homepage": "https://github.com/almhajer/autolanguage",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "engines": {
     "vscode": "^1.60.0"
   },
