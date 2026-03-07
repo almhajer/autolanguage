@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.0.6-blue?style=for-the-badge&logo=visual-studio-code)
+![Version](https://img.shields.io/badge/version-0.0.9-blue?style=for-the-badge&logo=visual-studio-code)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.60.0%2B-green?style=for-the-badge&logo=visual-studio-code)
 [![License](https://img.shields.io/badge/license-MIT-orange?style=for-the-badge&logo=opensourceinitiative)](LICENSE.md)
 
@@ -136,7 +136,7 @@
 
 | Step | Action |
 |:----:|:-------|
-| 1️⃣ | Download `autolanguage-0.0.6.vsix` |
+| 1️⃣ | Download `autolanguage-0.0.9.vsix` |
 | 2️⃣ | Open VS Code |
 | 3️⃣ | Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac) |
 | 4️⃣ | Run `Extensions: Install from VSIX...` |
@@ -149,12 +149,12 @@
 ### ⌨️ Terminal install
 
 ```bash
-code --install-extension autolanguage-0.0.6.vsix
+code --install-extension autolanguage-0.0.9.vsix
 ```
 
 <div align="center">
 
-[![Download VSIX](https://img.shields.io/badge/Download-VSIX-blue?style=for-the-badge)](https://github.com/almhajer/autolanguage/releases/tag/v0.0.6)
+[![Download VSIX](https://img.shields.io/badge/Download-VSIX-blue?style=for-the-badge)](https://github.com/almhajer/autolanguage/releases/tag/v0.0.9)
 
 </div>
 
